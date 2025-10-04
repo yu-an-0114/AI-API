@@ -1,0 +1,500 @@
+openapi: 3.0.3
+info:
+  title: 食譜 AI API
+  version: "1.0.0"
+  description: |
+    提供圖片辨識與食譜生成的 API，支援圖片與手動輸入兩種流程。
+
+servers:
+  - url: http://localhost:8080/api/v1
+
+paths:
+  /recipe/food:
+    post:
+      summary: 圖片辨識食物
+      description: 上傳食物圖片，辨識食物名稱、描述、可能食材與設備。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FoodRecognitionRequest'
+      responses:
+        '200':
+          description: 成功辨識
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FoodRecognitionResponse'
+
+  /recipe/ingredient:
+    post:
+      summary: 圖片辨識食材與設備
+      description: 上傳食材/設備圖片，辨識所有食材、設備與摘要。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IngredientRecognitionRequest'
+      responses:
+        '200':
+          description: 成功辨識
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IngredientRecognitionResponse'
+
+  /recipe/generate:
+    post:
+      summary: 使用食物名稱與偏好生成詳細新手友善食譜
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecipeByNameRequest'
+      responses:
+        '200':
+          description: 生成食譜
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecipeByNameResponse'
+
+  /recipe/suggest:
+    post:
+      summary: 使用食材與設備推薦適合的食譜
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecipeByIngredientsRequest'
+      responses:
+        '200':
+          description: 推薦食譜
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecipeByNameResponse'
+
+components:
+  schemas:
+    # --- 食物辨識 ---
+    FoodRecognitionRequest:
+      type: object
+      properties:
+        image:
+          type: string
+          description: base64 encoded image 或 image URL
+        description_hint:
+          type: string
+          description: 可選，使用者對圖片的簡述
+      required: [image]
+
+    FoodRecognitionResponse:
+      type: object
+      properties:
+        recognized_foods:
+          type: array
+          items:
+            $ref: '#/components/schemas/RecognizedFood'
+
+    RecognizedFood:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        possible_ingredients:
+          type: array
+          items:
+            $ref: '#/components/schemas/PossibleIngredient'
+        possible_equipment:
+          type: array
+          items:
+            $ref: '#/components/schemas/PossibleEquipment'
+
+    PossibleIngredient:
+      type: object
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+          description: 分類（如：蔬菜、肉類、調味料等）
+
+    PossibleEquipment:
+      type: object
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+          description: 分類（如：鍋具、烤箱等）
+
+    # --- 食材辨識 ---
+    IngredientRecognitionRequest:
+      type: object
+      properties:
+        image:
+          type: string
+        description_hint:
+          type: string
+          description: 可選，使用者對圖片的簡述
+      required: [image]
+
+    IngredientRecognitionResponse:
+      type: object
+      properties:
+        ingredients:
+          type: array
+          items:
+            $ref: '#/components/schemas/Ingredient'
+        equipment:
+          type: array
+          items:
+            $ref: '#/components/schemas/Equipment'
+        summary:
+          type: string
+
+    Ingredient:
+      type: object
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+        amount:
+          type: string
+        unit:
+          type: string
+        preparation:
+          type: string
+          description: 處理方式（如：切絲、洗淨，可省略）
+
+    Equipment:
+      type: object
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+        size:
+          type: string
+          description: 可省略
+        material:
+          type: string
+          description: 可省略
+        power_source:
+          type: string
+          description: 可省略
+
+    # --- 依名稱生成食譜 ---
+    RecipeByNameRequest:
+      type: object
+      properties:
+        dish_name:
+          type: string
+        preferred_ingredients:
+          type: array
+          items:
+            type: string
+        excluded_ingredients:
+          type: array
+          items:
+            type: string
+        preferred_equipment:
+          type: array
+          items:
+            type: string
+        preference:
+          type: object
+          properties:
+            cooking_method:
+              type: string
+            doneness:
+              type: string
+            serving_size:
+              type: string
+      required: [dish_name, preference]
+
+    RecipeByNameResponse:
+      type: object
+      properties:
+        dish_name:
+          type: string
+        dish_description:
+          type: string
+        ingredients:
+          type: array
+          items:
+            $ref: '#/components/schemas/Ingredient'
+        equipment:
+          type: array
+          items:
+            $ref: '#/components/schemas/Equipment'
+        recipe:
+          type: array
+          items:
+            $ref: '#/components/schemas/RecipeStep'
+
+    RecipeStep:
+      type: object
+      properties:
+        step_number:
+          type: integer
+        ARtype:
+          $ref: '#/components/schemas/ARtype'
+        title:
+          type: string
+        description:
+          type: string
+        actions:
+          type: array
+          items:
+            $ref: '#/components/schemas/RecipeAction'
+        estimated_total_time:
+          type: string
+        temperature:
+          type: string
+        warnings:
+          type: string
+        notes:
+          type: string
+
+    RecipeAction:
+      type: object
+      properties:
+        action:
+          type: string
+        tool_required:
+          type: string
+        material_required:
+          type: array
+          items:
+            type: string
+        time_minutes:
+          type: integer
+        instruction_detail:
+          type: string
+
+    # --- 根據食材推薦食譜 ---
+    RecipeByIngredientsRequest:
+      type: object
+      properties:
+        available_ingredients:
+          type: array
+          items:
+            $ref: '#/components/schemas/Ingredient'
+        available_equipment:
+          type: array
+          items:
+            $ref: '#/components/schemas/Equipment'
+        preference:
+          type: object
+          properties:
+            cooking_method:
+              type: string
+            dietary_restrictions:
+              type: array
+              items:
+                type: string
+            serving_size:
+              type: string
+      required: [available_ingredients, available_equipment, preference]
+    #AR類型
+    ARtype:
+      type: string
+      description: AR 動畫類型
+      enum:
+        - putIntoContainer
+        - stir
+        - pourLiquid
+        - flipPan
+        - countdown
+        - temperature
+        - flame
+        - sprinkle
+        - torch
+        - cut
+        - peel
+        - flip
+        - beatEgg
+
+    FlameLevel:
+      type: string
+      description: 火焰強度
+      enum: [small, medium, large]
+
+    Container:
+      type: string
+      description: 容器
+      enum: [pan, pot, bowl, plate, wok, cup, bakingTray]
+
+    ARActionBase:
+      type: object
+      properties:
+        type:
+          $ref: '#/components/schemas/ARtype'
+        container:
+          $ref: '#/components/schemas/Container'
+        ingredient:
+          type: string
+          description: 食材字串，**需小寫字母開頭**
+          nullable: true
+          pattern: "^[a-z].*$"
+        color:
+          type: string
+          nullable: true
+        time:
+          type: number
+          nullable: true
+        temperature:
+          type: number
+          nullable: true
+        flameLevel:
+          $ref: '#/components/schemas/FlameLevel'
+
+    # --- 依 type 分流後的具體 schema（用 const 鎖定 type，並補上 required）---
+    ARPutIntoContainerParams:
+      allOf:
+        - $ref: '#/components/schemas/ARActionBase'
+        - type: object
+          properties:
+            type:
+              type: string
+              const: putIntoContainer
+          required: [type, ingredient, container]
+
+    ARStirParams:
+      allOf:
+        - $ref: '#/components/schemas/ARActionBase'
+        - type: object
+          properties:
+            type: { type: string, const: stir }
+          required: [type, container, ingredient]
+
+    ARPourLiquidParams:
+      allOf:
+        - $ref: '#/components/schemas/ARActionBase'
+        - type: object
+          properties:
+            type: { type: string, const: pourLiquid }
+          required: [type, container, color, ingredient]
+
+    ARFlipPanParams:
+      allOf:
+        - $ref: '#/components/schemas/ARActionBase'
+        - type: object
+          properties:
+            type: { type: string, const: flipPan }
+          required: [type, container]
+
+    ARCountdownParams:
+      allOf:
+        - $ref: '#/components/schemas/ARActionBase'
+        - type: object
+          properties:
+            type: { type: string, const: countdown }
+          required: [type, time, container]
+
+    ARTemperatureParams:
+      allOf:
+        - $ref: '#/components/schemas/ARActionBase'
+        - type: object
+          properties:
+            type: { type: string, const: temperature }
+          required: [type, temperature, container]
+
+    ARFlameParams:
+      allOf:
+        - $ref: '#/components/schemas/ARActionBase'
+        - type: object
+          properties:
+            type: { type: string, const: flame }
+          required: [type, container, flameLevel]
+
+    ARSprinkleParams:
+      allOf:
+        - $ref: '#/components/schemas/ARActionBase'
+        - type: object
+          properties:
+            type: { type: string, const: sprinkle }
+          required: [type, container, ingredient]
+
+    ARTorchParams:
+      allOf:
+        - $ref: '#/components/schemas/ARActionBase'
+        - type: object
+          properties:
+            type: { type: string, const: torch }
+          required: [type, ingredient]
+
+    ARCutParams:
+      allOf:
+        - $ref: '#/components/schemas/ARActionBase'
+        - type: object
+          properties:
+            type: { type: string, const: cut }
+          required: [type, ingredient]
+
+    ARPeelParams:
+      allOf:
+        - $ref: '#/components/schemas/ARActionBase'
+        - type: object
+          properties:
+            type: { type: string, const: peel }
+          required: [type, ingredient]
+
+    ARFlipParams:
+      allOf:
+        - $ref: '#/components/schemas/ARActionBase'
+        - type: object
+          properties:
+            type: { type: string, const: flip }
+          required: [type, container, ingredient]
+
+    ARBeatEggParams:
+      allOf:
+        - $ref: '#/components/schemas/ARActionBase'
+        - type: object
+          properties:
+            type: { type: string, const: beatEgg }
+          required: [type, container]
+
+    # 對外暴露的統一入口：依 type 自動分派
+    ARActionParams:
+      oneOf:
+        - $ref: '#/components/schemas/ARPutIntoContainerParams'
+        - $ref: '#/components/schemas/ARStirParams'
+        - $ref: '#/components/schemas/ARPourLiquidParams'
+        - $ref: '#/components/schemas/ARFlipPanParams'
+        - $ref: '#/components/schemas/ARCountdownParams'
+        - $ref: '#/components/schemas/ARTemperatureParams'
+        - $ref: '#/components/schemas/ARFlameParams'
+        - $ref: '#/components/schemas/ARSprinkleParams'
+        - $ref: '#/components/schemas/ARTorchParams'
+        - $ref: '#/components/schemas/ARCutParams'
+        - $ref: '#/components/schemas/ARPeelParams'
+        - $ref: '#/components/schemas/ARFlipParams'
+        - $ref: '#/components/schemas/ARBeatEggParams'
+      discriminator:
+        propertyName: type
+        mapping:
+          putIntoContainer: '#/components/schemas/ARPutIntoContainerParams'
+          stir: '#/components/schemas/ARStirParams'
+          pourLiquid: '#/components/schemas/ARPourLiquidParams'
+          flipPan: '#/components/schemas/ARFlipPanParams'
+          countdown: '#/components/schemas/ARCountdownParams'
+          temperature: '#/components/schemas/ARTemperatureParams'
+          flame: '#/components/schemas/ARFlameParams'
+          sprinkle: '#/components/schemas/ARSprinkleParams'
+          torch: '#/components/schemas/ARTorchParams'
+          cut: '#/components/schemas/ARCutParams'
+          peel: '#/components/schemas/ARPeelParams'
+          flip: '#/components/schemas/ARFlipParams'
+          beatEgg: '#/components/schemas/ARBeatEggParams'
+

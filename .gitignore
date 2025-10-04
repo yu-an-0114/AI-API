@@ -1,0 +1,32 @@
+# 編譯過程產生的檔案
+*.o
+*.out
+*.exe
+*.a
+*.so
+*.dylib
+
+# make 產生的中間產物
+build/
+bin/
+obj/
+
+# macOS 系統檔案
+.DS_Store
+
+# 環境變數檔
+.env
+
+# 日誌檔案
+*.log
+logs/
+
+# Docker 相關
+*.pid
+*.sock
+docker-compose.override.yml
+
+# IDE 或編輯器設定檔
+.vscode/
+.idea/
+*.swp
