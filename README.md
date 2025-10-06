@@ -294,23 +294,16 @@ POST /api/v1/recipe/suggest
 
 ---
 
-### AR 擴增實境欄位
+### 5. Cook 問答（Cook QA）
 
-- `POST /api/v1/recipe/generate` 與 `POST /api/v1/recipe/suggest` 的每個步驟都會回傳 `ARtype` 與 `ar_parameters`，欄位格式與 `recipe-api.yaml` 完全一致。
-- 服務會先嘗試讓模型產出合法的 AR 參數，若驗證失敗再進行嚴格重試，最後才回退到後端推論，確保兩個端點的 AR 行為一致。
-- `ar_parameters.ingredient` 會優先套用白名單中的英文識別名稱（例如 `bacon`, `chickenThigh`, `green_pepper`）。
-- 若識別名稱包含多個單字，會以英文逗號 `,` 分隔，禁止使用底線 `_` 或泛用詞（如 `ingredient`, `food`）。
-- 新增固定對應的食材時，請更新 `internal/core/recipe/suggestion_service.go` 內的 `canonicalIngredientMap`，鍵使用小寫匹配，值為最終輸出的識別名稱。
-
-### 5. 食譜問答（Recipe QA）
-
-**用途**：帶入使用者問題、料理圖片與完整食譜，讓 AI 回答烹調相關疑問。
+**用途**：帶入使用者問題、當前步驟描述、料理圖片與完整食譜，讓 AI 即時回覆烹調疑問。
 
 **請求**
 ```json
-POST /api/v1/recipe/qa
+POST /api/v1/cook/qa
 {
   "question": "如何避免番茄炒蛋時番茄出水太多？",
+  "current_step_description": "正在翻炒番茄與雞蛋，發現汁水偏多",
   "image": "data:image/png;base64,...",
   "recipe": {
     "dish_name": "番茄炒蛋",
@@ -349,15 +342,17 @@ POST /api/v1/recipe/qa
 **回應**
 ```json
 {
-  "answer": "先將番茄去籽並快速翻炒，避免長時間悶煮造成出水。先炒蛋再下番茄，可降低水分對蛋體口感的影響。",
-  "key_points": [
-    "炒番茄前先以廚房紙巾吸去切面多餘水分",
-    "番茄入鍋後以大火快炒 30 秒內拌入雞蛋",
-    "若想保留醬汁，可在最後補少量太白粉水勾芡"
-  ],
-  "confidence": 0.86
+  "answer": "先將番茄去籽並快速翻炒，避免長時間悶煮造成出水。先炒蛋再下番茄，可降低水分對蛋體口感的影響。"
 }
 ```
+
+### AR 擴增實境欄位
+
+- `POST /api/v1/recipe/generate` 與 `POST /api/v1/recipe/suggest` 的每個步驟都會回傳 `ARtype` 與 `ar_parameters`，欄位格式與 `recipe-api.yaml` 完全一致。
+- 服務會先嘗試讓模型產出合法的 AR 參數，若驗證失敗再進行嚴格重試，最後才回退到後端推論，確保兩個端點的 AR 行為一致。
+- `ar_parameters.ingredient` 會優先套用白名單中的英文識別名稱（例如 `bacon`, `chickenThigh`, `green_pepper`）。
+- 若識別名稱包含多個單字，會以英文逗號 `,` 分隔，禁止使用底線 `_` 或泛用詞（如 `ingredient`, `food`）。
+- 新增固定對應的食材時，請更新 `internal/core/recipe/suggestion_service.go` 內的 `canonicalIngredientMap`，鍵使用小寫匹配，值為最終輸出的識別名稱。
 
 ---
 
