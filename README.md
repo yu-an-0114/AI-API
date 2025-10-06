@@ -294,6 +294,87 @@ POST /api/v1/recipe/suggest
 
 ---
 
+### AR 擴增實境欄位
+
+- `POST /api/v1/recipe/generate` 與 `POST /api/v1/recipe/suggest` 的每個步驟都會回傳 `ARtype` 與 `ar_parameters`，欄位格式與 `recipe-api.yaml` 完全一致。
+- 服務會先嘗試讓模型產出合法的 AR 參數，若驗證失敗再進行嚴格重試，最後才回退到後端推論，確保兩個端點的 AR 行為一致。
+- `ar_parameters.ingredient` 會優先套用白名單中的英文識別名稱（例如 `bacon`, `chickenThigh`, `green_pepper`）。
+- 若識別名稱包含多個單字，會以英文逗號 `,` 分隔，禁止使用底線 `_` 或泛用詞（如 `ingredient`, `food`）。
+- 新增固定對應的食材時，請更新 `internal/core/recipe/suggestion_service.go` 內的 `canonicalIngredientMap`，鍵使用小寫匹配，值為最終輸出的識別名稱。
+
+### 食譜問答（Recipe QA）範例
+
+以下範例示範如何：
+
+1. 建立一份固定的「番茄炒蛋」食譜資料，回傳給前端或其他服務。
+2. 將既有食譜、題目與圖片（可為 base64 或 URL）包成 AI 問答請求 payload。
+
+```go
+package example
+
+import (
+    "encoding/json"
+    "recipe-generator/internal/pkg/common"
+)
+
+// 建立固定的番茄炒蛋食譜
+func buildTomatoEggRecipe() *common.Recipe {
+    return &common.Recipe{
+        DishName:        "番茄炒蛋",
+        DishDescription: "經典家常菜，酸甜開胃",
+        Ingredients: []common.Ingredient{
+            {Name: "番茄", Type: "蔬菜", Amount: "2", Unit: "顆", Preparation: "切塊"},
+            {Name: "蛋", Type: "蛋類", Amount: "3", Unit: "顆", Preparation: "打散"},
+        },
+        Equipment: []common.Equipment{
+            {Name: "炒鍋", Type: "鍋具", Size: "中型", Material: "鐵", PowerSource: "瓦斯"},
+        },
+        Recipe: []common.RecipeStep{
+            {
+                StepNumber:         1,
+                Title:              "備料",
+                Description:        "將番茄切塊，蛋打散備用。",
+                EstimatedTotalTime: "2分鐘",
+                Temperature:        "常溫",
+                Warnings:           "",
+                Notes:              "",
+                Actions: []common.RecipeAction{
+                    {
+                        Action:            "切塊",
+                        ToolRequired:      "刀",
+                        MaterialRequired:  []string{"番茄"},
+                        TimeMinutes:       2,
+                        InstructionDetail: "番茄切成適口大小",
+                    },
+                },
+            },
+        },
+    }
+}
+
+// 將題目、圖片與食譜組成 AI 問答 payload
+func buildRecipeQARequest(question, image string, recipe *common.Recipe) ([]byte, error) {
+    payload := struct {
+        Question   string         `json:"question"`
+        Image      string         `json:"image,omitempty"`
+        RecipeDesc string         `json:"recipe_description"`
+        Recipe     *common.Recipe `json:"recipe"`
+    }{
+        Question:   question,
+        Image:      image,
+        RecipeDesc: recipe.DishDescription,
+        Recipe:     recipe,
+    }
+    return json.Marshal(payload)
+}
+
+// 使用示例：
+// recipe := buildTomatoEggRecipe()
+// body, err := buildRecipeQARequest("如何避免番茄出水太多？", "data:image/png;base64,...", recipe)
+```
+
+---
+
 ## 健康檢查 API 回應格式
 
 ### /health
@@ -425,4 +506,3 @@ MIT License
 ---
 
 如需更詳細的 API schema、請參考 `recipe-api.yaml` 及原始碼註解。
-
