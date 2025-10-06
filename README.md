@@ -304,75 +304,59 @@ POST /api/v1/recipe/suggest
 
 ### 5. 食譜問答（Recipe QA）
 
-**用途**：帶入問題、圖片與既有食譜，讓 AI 回答烹調相關問題。
+**用途**：帶入使用者問題、料理圖片與完整食譜，讓 AI 回答烹調相關疑問。
 
-以下範例示範如何：
-
-1. 建立一份固定的「番茄炒蛋」食譜資料，回傳給前端或其他服務。
-2. 將既有食譜、題目與圖片（可為 base64 或 URL）包成 AI 問答請求 payload。
-
-```go
-package example
-
-import (
-    "encoding/json"
-    "recipe-generator/internal/pkg/common"
-)
-
-// 建立固定的番茄炒蛋食譜
-func buildTomatoEggRecipe() *common.Recipe {
-    return &common.Recipe{
-        DishName:        "番茄炒蛋",
-        DishDescription: "經典家常菜，酸甜開胃",
-        Ingredients: []common.Ingredient{
-            {Name: "番茄", Type: "蔬菜", Amount: "2", Unit: "顆", Preparation: "切塊"},
-            {Name: "蛋", Type: "蛋類", Amount: "3", Unit: "顆", Preparation: "打散"},
-        },
-        Equipment: []common.Equipment{
-            {Name: "炒鍋", Type: "鍋具", Size: "中型", Material: "鐵", PowerSource: "瓦斯"},
-        },
-        Recipe: []common.RecipeStep{
-            {
-                StepNumber:         1,
-                Title:              "備料",
-                Description:        "將番茄切塊，蛋打散備用。",
-                EstimatedTotalTime: "2分鐘",
-                Temperature:        "常溫",
-                Warnings:           "",
-                Notes:              "",
-                Actions: []common.RecipeAction{
-                    {
-                        Action:            "切塊",
-                        ToolRequired:      "刀",
-                        MaterialRequired:  []string{"番茄"},
-                        TimeMinutes:       2,
-                        InstructionDetail: "番茄切成適口大小",
-                    },
-                },
-            },
-        },
-    }
+**請求**
+```json
+POST /api/v1/recipe/qa
+{
+  "question": "如何避免番茄炒蛋時番茄出水太多？",
+  "image": "data:image/png;base64,...",
+  "recipe": {
+    "dish_name": "番茄炒蛋",
+    "dish_description": "經典家常菜，酸甜開胃",
+    "ingredients": [
+      { "name": "番茄", "type": "蔬菜", "amount": "2", "unit": "顆", "preparation": "切塊" },
+      { "name": "蛋", "type": "蛋類", "amount": "3", "unit": "顆", "preparation": "打散" }
+    ],
+    "equipment": [
+      { "name": "炒鍋", "type": "鍋具", "size": "中型", "material": "鐵", "power_source": "瓦斯" }
+    ],
+    "recipe": [
+      {
+        "step_number": 1,
+        "title": "備料",
+        "description": "將番茄切塊，蛋打散備用。",
+        "actions": [
+          {
+            "action": "切塊",
+            "tool_required": "刀",
+            "material_required": ["番茄"],
+            "time_minutes": 2,
+            "instruction_detail": "番茄切成適口大小"
+          }
+        ],
+        "estimated_total_time": "2分鐘",
+        "temperature": "常溫",
+        "warnings": null,
+        "notes": ""
+      }
+    ]
+  }
 }
+```
 
-// 將題目、圖片與食譜組成 AI 問答 payload
-func buildRecipeQARequest(question, image string, recipe *common.Recipe) ([]byte, error) {
-    payload := struct {
-        Question   string         `json:"question"`
-        Image      string         `json:"image,omitempty"`
-        RecipeDesc string         `json:"recipe_description"`
-        Recipe     *common.Recipe `json:"recipe"`
-    }{
-        Question:   question,
-        Image:      image,
-        RecipeDesc: recipe.DishDescription,
-        Recipe:     recipe,
-    }
-    return json.Marshal(payload)
+**回應**
+```json
+{
+  "answer": "先將番茄去籽並快速翻炒，避免長時間悶煮造成出水。先炒蛋再下番茄，可降低水分對蛋體口感的影響。",
+  "key_points": [
+    "炒番茄前先以廚房紙巾吸去切面多餘水分",
+    "番茄入鍋後以大火快炒 30 秒內拌入雞蛋",
+    "若想保留醬汁，可在最後補少量太白粉水勾芡"
+  ],
+  "confidence": 0.86
 }
-
-// 使用示例：
-// recipe := buildTomatoEggRecipe()
-// body, err := buildRecipeQARequest("如何避免番茄出水太多？", "data:image/png;base64,...", recipe)
 ```
 
 ---
