@@ -302,7 +302,9 @@ POST /api/v1/recipe/suggest
 - 若識別名稱包含多個單字，會以英文逗號 `,` 分隔，禁止使用底線 `_` 或泛用詞（如 `ingredient`, `food`）。
 - 新增固定對應的食材時，請更新 `internal/core/recipe/suggestion_service.go` 內的 `canonicalIngredientMap`，鍵使用小寫匹配，值為最終輸出的識別名稱。
 
-### 食譜問答（Recipe QA）範例
+### 5. 食譜問答（Recipe QA）
+
+**用途**：帶入問題、圖片與既有食譜，讓 AI 回答烹調相關問題。
 
 以下範例示範如何：
 
