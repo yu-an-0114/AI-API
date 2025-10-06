@@ -456,7 +456,7 @@ func buildARParamPrompt(step string, choices []string, containerChoices []string
 - flip: container, ingredient
 - beatEgg: container
 
-請確保所有回傳的文字值ingredient 使用英文開頭小寫。
+請確保所有回傳的文字值ingredient 使用英文開頭小寫，並且不可回傳 "ingredient"、"food" 等泛用詞；若包含多個單字，請使用英文逗號","分隔，禁止使用底線"_"。
 請確保回傳的 JSON 包含上述必需欄位，並移除所有程式碼區塊標記。
 請確保回傳的 JSON 嚴格符合 iOS Codable 規範，不含 Optional 或其他與 JSON 格式無關的標識。
 範例格式：
@@ -598,7 +598,7 @@ func buildARParamPromptStrict(step string, choices []string, containerChoices []
 			"- peel: ingredient\n"+
 			"- flip: container, ingredient\n"+
 			"- beatEgg: container\n"+
-			"請確保 ingredient（若非 null）以英文小寫開頭。",
+			"請確保 ingredient（若非 null）以英文小寫開頭，且不得使用 \"ingredient\"、\"food\" 等泛用詞；若包含多個單字，請使用英文逗號\",\"分隔，禁止使用底線\"_\"。",
 		reason, join(choices), join(containerChoices), step,
 	)
 }
@@ -765,6 +765,47 @@ func buildSuggestionKey(req *common.RecipeByIngredientsRequest) string {
 	return strings.Join(keyParts, "||")
 }
 
+var canonicalIngredientMap = map[string]string{
+	"bacon":         "bacon",
+	"brazil":        "brazil",
+	"brocoli":       "brocoli",
+	"butter":        "butter",
+	"carrot":        "carrot",
+	"cheese":        "cheese",
+	"chickenthigh":  "chickenThigh",
+	"chicken_thigh": "chickenThigh",
+	"chili":         "chili",
+	"corn":          "corn",
+	"egg":           "egg",
+	"garlic":        "garlic",
+	"greenpepper":   "green_pepper",
+	"green_pepper":  "green_pepper",
+	"meat":          "meat",
+	"mushroom":      "mushroom",
+	"noodle":        "noodle",
+	"onion":         "onion",
+	"potato":        "potato",
+	"salmon":        "salmon",
+	"shrimp":        "shrimp",
+	"squid":         "squid",
+	"tofu":          "tofu",
+	"tomato":        "tomato",
+}
+
+func canonicalizeIngredient(norm string) (string, bool) {
+	if norm == "" {
+		return "", false
+	}
+	if val, ok := canonicalIngredientMap[norm]; ok {
+		return val, true
+	}
+	noUnderscore := strings.ReplaceAll(norm, "_", "")
+	if val, ok := canonicalIngredientMap[noUnderscore]; ok {
+		return val, true
+	}
+	return "", false
+}
+
 func inferIngredientIdentifier(step common.RecipeStep, recipeIngredients []common.Ingredient) string {
 	candidates := make([]string, 0)
 	for _, act := range step.Actions {
@@ -776,12 +817,79 @@ func inferIngredientIdentifier(step common.RecipeStep, recipeIngredients []commo
 	for _, ing := range recipeIngredients {
 		candidates = append(candidates, ing.Name, ing.Type, ing.Preparation)
 	}
+	var firstCandidate string
 	for _, cand := range candidates {
-		if norm := normalizeIdentifierCandidate(cand); norm != "" {
-			return norm
+		norm := normalizeIdentifierCandidate(cand)
+		if norm == "" {
+			continue
+		}
+		if canonical, ok := canonicalizeIngredient(norm); ok {
+			return formatIngredientIdentifier(canonical)
+		}
+		if firstCandidate == "" {
+			firstCandidate = norm
+		}
+	}
+	for _, ing := range recipeIngredients {
+		nameNorm := normalizeIdentifierCandidate(ing.Name)
+		if canonical, ok := canonicalizeIngredient(nameNorm); ok {
+			return formatIngredientIdentifier(canonical)
+		}
+		if firstCandidate == "" && nameNorm != "" {
+			firstCandidate = nameNorm
+		}
+		prepNorm := normalizeIdentifierCandidate(ing.Preparation)
+		if canonical, ok := canonicalizeIngredient(prepNorm); ok {
+			return formatIngredientIdentifier(canonical)
+		}
+		if firstCandidate == "" && prepNorm != "" {
+			firstCandidate = prepNorm
+		}
+	}
+	if firstCandidate != "" {
+		return formatIngredientIdentifier(firstCandidate)
+	}
+	for _, ing := range recipeIngredients {
+		raw := strings.TrimSpace(ing.Name)
+		if raw != "" {
+			return formatIngredientIdentifier(raw)
 		}
 	}
 	return "ingredient"
+}
+
+func formatIngredientIdentifier(id string) string {
+	id = strings.TrimSpace(id)
+	if id == "" {
+		return id
+	}
+	if strings.ContainsAny(id, " _-/;,\t") {
+		parts := strings.FieldsFunc(id, func(r rune) bool {
+			switch r {
+			case ' ', '\t', '_', '-', '/', ';':
+				return true
+			case ',':
+				return true
+			default:
+				return false
+			}
+		})
+		if len(parts) == 0 {
+			return strings.ToLower(id)
+		}
+		for i := range parts {
+			parts[i] = strings.ToLower(strings.TrimSpace(parts[i]))
+		}
+		if len(parts) == 1 {
+			return parts[0]
+		}
+		return strings.Join(parts, ",")
+	}
+	if len(id) == 1 {
+		return strings.ToLower(id)
+	}
+	first := strings.ToLower(id[:1])
+	return first + id[1:]
 }
 
 func normalizeIdentifierCandidate(input string) string {

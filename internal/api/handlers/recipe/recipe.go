@@ -181,6 +181,8 @@ func (h *Handler) HandleRecipeByName(c *gin.Context) {
 		}
 		response.Recipe[i] = RecipeStep{
 			StepNumber:         step.StepNumber,
+			ARtype:             step.ARtype,
+			ARParameters:       step.ARParameters,
 			Title:              step.Title,
 			Description:        step.Description,
 			Actions:            actions,
