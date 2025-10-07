@@ -218,6 +218,16 @@ POST /api/v1/recipe/generate
   "recipe": [
     {
       "step_number": 1,
+      "ARtype": "cut",
+      "ar_parameters": {
+        "type": "cut",
+        "container": null,
+        "ingredient": "tomato",
+        "color": null,
+        "time": null,
+        "temperature": null,
+        "flameLevel": null
+      },
       "title": "備料",
       "description": "將番茄切塊，蛋打散備用。",
       "actions": [
@@ -272,6 +282,16 @@ POST /api/v1/recipe/suggest
   "recipe": [
     {
       "step_number": 1,
+      "ARtype": "stir",
+      "ar_parameters": {
+        "type": "stir",
+        "container": "pan",
+        "ingredient": "egg",
+        "color": null,
+        "time": null,
+        "temperature": null,
+        "flameLevel": null
+      },
       "title": "煎蛋",
       "description": "將蛋液倒入鍋中，小火煎熟。",
       "actions": [
@@ -318,6 +338,16 @@ POST /api/v1/cook/qa
     "recipe": [
       {
         "step_number": 1,
+        "ARtype": "cut",
+        "ar_parameters": {
+          "type": "cut",
+          "container": null,
+          "ingredient": "tomato",
+          "color": null,
+          "time": null,
+          "temperature": null,
+          "flameLevel": null
+        },
         "title": "備料",
         "description": "將番茄切塊，蛋打散備用。",
         "actions": [
