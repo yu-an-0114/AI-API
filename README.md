@@ -124,6 +124,7 @@ docker-compose up --build -d
 - `POST /api/v1/recipe/ingredient` — 圖片辨識食材與設備
 - `POST /api/v1/recipe/generate` — 依據名稱/偏好生成詳細食譜
 - `POST /api/v1/recipe/suggest` — 根據食材/設備推薦食譜
+- `POST /api/v1/cook/qa` — 烹調過程即時問答
 - `GET /health` `/ready` `/live` — 健康檢查
 
 **所有 API 輸入/輸出皆嚴格遵循 OpenAPI schema，請參考 `recipe-api.yaml`。**
@@ -221,12 +222,7 @@ POST /api/v1/recipe/generate
       "ARtype": "cut",
       "ar_parameters": {
         "type": "cut",
-        "container": null,
-        "ingredient": "tomato",
-        "color": null,
-        "time": null,
-        "temperature": null,
-        "flameLevel": null
+        "ingredient": "tomato"
       },
       "title": "備料",
       "description": "將番茄切塊，蛋打散備用。",
@@ -241,8 +237,8 @@ POST /api/v1/recipe/generate
       ],
       "estimated_total_time": "2分鐘",
       "temperature": "常溫",
-      "warnings": null,
-      "notes": ""
+      "warnings": "無",
+      "notes": "無備註"
     }
   ]
 }
@@ -286,11 +282,7 @@ POST /api/v1/recipe/suggest
       "ar_parameters": {
         "type": "stir",
         "container": "pan",
-        "ingredient": "egg",
-        "color": null,
-        "time": null,
-        "temperature": null,
-        "flameLevel": null
+        "ingredient": "egg"
       },
       "title": "煎蛋",
       "description": "將蛋液倒入鍋中，小火煎熟。",
@@ -305,7 +297,7 @@ POST /api/v1/recipe/suggest
       ],
       "estimated_total_time": "3分鐘",
       "temperature": "小火",
-      "warnings": null,
+      "warnings": "無",
       "notes": "可加鹽調味"
     }
   ]
@@ -341,12 +333,7 @@ POST /api/v1/cook/qa
         "ARtype": "cut",
         "ar_parameters": {
           "type": "cut",
-          "container": null,
-          "ingredient": "tomato",
-          "color": null,
-          "time": null,
-          "temperature": null,
-          "flameLevel": null
+          "ingredient": "tomato"
         },
         "title": "備料",
         "description": "將番茄切塊，蛋打散備用。",
@@ -361,8 +348,8 @@ POST /api/v1/cook/qa
         ],
         "estimated_total_time": "2分鐘",
         "temperature": "常溫",
-        "warnings": null,
-        "notes": ""
+        "warnings": "無",
+        "notes": "無備註"
       }
     ]
   }

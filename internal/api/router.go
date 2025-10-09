@@ -174,6 +174,8 @@ func SetupRouter(cfg *config.Config, cacheManager *cache.CacheManager) (*gin.Eng
 	// API 路由組
 	api := router.Group("/api/v1")
 	{
+		recipeHandlerInstance := recipeHandler.NewHandler(recipeSvc, suggestionSvc, aiService)
+
 		// 註冊食譜相關路由
 		recipeGroup := api.Group("/recipe")
 		{
@@ -186,16 +188,15 @@ func SetupRouter(cfg *config.Config, cacheManager *cache.CacheManager) (*gin.Eng
 			})
 
 			// 使用食材名稱生成食譜
-			recipeGroup.POST("/generate", func(c *gin.Context) {
-				handler := recipeHandler.NewHandler(recipeSvc, suggestionSvc)
-				handler.HandleRecipeByName(c)
-			})
+			recipeGroup.POST("/generate", recipeHandlerInstance.HandleRecipeByName)
 
 			// 使用食材與設備推薦食譜
-			recipeGroup.POST("/suggest", func(c *gin.Context) {
-				handler := recipeHandler.NewHandler(recipeSvc, suggestionSvc)
-				handler.HandleRecipeByIngredients(c)
-			})
+			recipeGroup.POST("/suggest", recipeHandlerInstance.HandleRecipeByIngredients)
+		}
+
+		cookGroup := api.Group("/cook")
+		{
+			cookGroup.POST("/qa", recipeHandlerInstance.HandleCookQA)
 		}
 	}
 
