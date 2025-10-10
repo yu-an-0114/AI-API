@@ -341,9 +341,9 @@ func (s *SuggestionService) SuggestRecipes(ctx context.Context, req *common.Reci
 		for attempt := 1; attempt <= maxTries && len(remaining) > 0; attempt++ {
 			var prompt string
 			if attempt == 1 && reason == "" {
-				prompt = buildBatchARParamPrompt(remaining, typeChoices, containerChoices)
+				prompt = buildBatchARParamPromptWithoutTypeGuidance(remaining, typeChoices, containerChoices)
 			} else {
-				prompt = buildBatchARParamPromptStrict(remaining, typeChoices, containerChoices, reason)
+				prompt = buildBatchARParamPromptStrictWithoutTypeGuidance(remaining, typeChoices, containerChoices, reason)
 			}
 
 			var batchResp arBatchResponse
@@ -551,7 +551,6 @@ func validateARParams(p common.ARActionParams) error {
 
 	return nil
 }
-
 
 // 呼叫 AI 並將 JSON 直接解到 out
 func (s *SuggestionService) jsonInto(ctx context.Context, prompt string, out any) error {
@@ -920,7 +919,6 @@ func normalizeColorCandidate(input string) string {
 	}
 	return ""
 }
-
 
 func strPtr(s string) *string {
 	return &s
