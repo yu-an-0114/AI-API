@@ -131,6 +131,10 @@ docker-compose up --build -d
 
 ---
 
+## 其他資源
+
+- [Swift Troubleshooting](docs/swift-troubleshooting.md)
+
 ## API 欄位說明與範例
 
 ### 1. 食物圖片辨識
