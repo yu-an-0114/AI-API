@@ -119,7 +119,6 @@ func (s *SuggestionService) SuggestRecipes(ctx context.Context, req *common.Reci
 16. 所有欄位都必須要有不能漏掉，如果不知道填什麼請留空 "" or null
 17. 只回傳一個獨立的json，不要回傳多個json
 18."ingredient":"ingredient"不要直接寫ingredient，如果是調味料或液體要寫那個的名稱
-
 請以以下 JSON 格式返回（僅作為範例，請勿直接複製內容）：
 {
     "dish_name": "菜名",
@@ -762,6 +761,7 @@ var canonicalIngredientMap = map[string]string{
 	"squid":         "squid",
 	"tofu":          "tofu",
 	"tomato":        "tomato",
+	"toast":         "toast",
 }
 
 func canonicalizeIngredient(norm string) (string, bool) {

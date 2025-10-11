@@ -32,7 +32,7 @@ type arBatchResponse struct {
 }
 
 type arBatchStep struct {
-	StepNumber   int                     `json:"step_number"`
+	StepNumber   int                    `json:"step_number"`
 	ARParameters *common.ARActionParams `json:"ar_parameters"`
 }
 
@@ -61,7 +61,7 @@ func buildBatchARParamPromptWithCorrection(steps []arPromptStep, choices []strin
 	}
 
 	prompt := fmt.Sprintf(`
-請一次性為以下烹飪步驟生成對應的 AR 參數。請只輸出 JSON，不要包含任何自然語言或程式碼區塊標記。
+請一次性為以下烹飪步驟生成對應的 AR 參數。請只輸出 JSON，不要包含任何自然語言或程式碼區塊標記。，用英文並確保所有輸出皆為 UTF-8 編碼以避免亂碼。
 %s
 type 候選（rawValue）：[%s]
 container 候選：[%s]
@@ -96,7 +96,7 @@ container 候選：[%s]
 - peel: ingredient
 - flip: ingredient, container
 - beatEgg: container
-
+請將每個步驟最主要的動作填入 "type" 欄位，並確保 type 從候選中擇一。
 請確保 ingredient（若非 null）以英文小寫開頭，且不得使用 "ingredient"、"food" 等泛用詞；若包含多個單字，請使用英文逗號 "," 分隔，禁止使用底線 "_".
 請勿輸出未列出的步驟或額外欄位，並確保 JSON 符合 iOS Codable 規範。
 步驟列表：
