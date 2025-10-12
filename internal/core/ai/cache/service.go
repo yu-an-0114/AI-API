@@ -7,6 +7,7 @@ import (
 
 	"recipe-generator/internal/core/ai"
 	"recipe-generator/internal/infrastructure/config"
+	"recipe-generator/internal/pkg/common"
 
 	"github.com/go-redis/redis/v8"
 )
@@ -58,7 +59,7 @@ func (s *Service) Get(ctx context.Context, prompt string, imageData string) (*ai
 
 	// 解析緩存
 	var resp ai.Response
-	if err := json.Unmarshal(data, &resp); err != nil {
+	if err := common.ParseJSONBytes(data, &resp); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal cache: %w", err)
 	}
 

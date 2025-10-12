@@ -1,7 +1,9 @@
 package common
 
 import (
+	"encoding/json"
 	"fmt"
+	"strconv"
 	"strings"
 )
 
@@ -50,16 +52,16 @@ type Recipe struct {
 }
 
 type RecipeStep struct {
-	StepNumber         int            `json:"step_number"`
-	ARtype             ARtype         `json:"ARtype,omitempty"`         
-	ARParameters       *ARActionParams `json:"ar_parameters,omitempty"` 
-	Title              string         `json:"title"`
-	Description        string         `json:"description"`
-	Actions            []RecipeAction `json:"actions"`
-	EstimatedTotalTime string         `json:"estimated_total_time"`
-	Temperature        string         `json:"temperature"`
-	Warnings           string         `json:"warnings"`
-	Notes              string         `json:"notes"`
+	StepNumber         int             `json:"step_number"`
+	ARtype             ARtype          `json:"ARtype"`
+	ARParameters       *ARActionParams `json:"ar_parameters"`
+	Title              string          `json:"title"`
+	Description        string          `json:"description"`
+	Actions            []RecipeAction  `json:"actions"`
+	EstimatedTotalTime string          `json:"estimated_total_time"`
+	Temperature        string          `json:"temperature"`
+	Warnings           string          `json:"warnings"`
+	Notes              string          `json:"notes"`
 }
 
 type RecipeAction struct {
@@ -156,12 +158,84 @@ const (
 
 // 你若有固定的容器清單，可以做枚舉；先用 string 方便擴充
 type ARActionParams struct {
-	Type        ARtype      `json:"type"`                  // discriminator
-	Container   string      `json:"container,omitempty"`   // pan, pot, bowl...
-	Ingredient  *string     `json:"ingredient"`            // 允許 null
-	Color       *string     `json:"color"`                 // 允許 null
-	Time        *float64    `json:"time"`                  // 允許 null
-	Temperature *float64    `json:"temperature"`           // 允許 null
-	FlameLevel  *FlameLevel `json:"flameLevel"`            // 允許 null
+	Type        ARtype          `json:"type"`                // discriminator
+	Container   string          `json:"container,omitempty"` // pan, pot, bowl...
+	Ingredient  *string         `json:"ingredient"`          // 允許 null
+	Color       *string         `json:"color"`               // 允許 null
+	Time        NullableFloat64 `json:"time"`                // 允許 null
+	Temperature NullableFloat64 `json:"temperature"`         // 允許 null
+	FlameLevel  *FlameLevel     `json:"flameLevel"`          // 允許 null
 }
 
+// NullableFloat64 允許 JSON 中的數值或字串數值，並在解析失敗時退回 nil
+type NullableFloat64 struct {
+	Value *float64
+}
+
+// NewNullableFloat64 建立帶有值的 NullableFloat64
+func NewNullableFloat64(v float64) NullableFloat64 {
+	return NullableFloat64{Value: &v}
+}
+
+// NullableFloat64FromPtr 從指標建立 NullableFloat64
+func NullableFloat64FromPtr(v *float64) NullableFloat64 {
+	return NullableFloat64{Value: v}
+}
+
+// Ptr 回傳內部的 float64 指標
+func (nf NullableFloat64) Ptr() *float64 {
+	return nf.Value
+}
+
+// IsNil 檢查是否為 nil
+func (nf NullableFloat64) IsNil() bool {
+	return nf.Value == nil
+}
+
+// IsZero 讓 encoding/json 的 omitempty 可以辨識零值
+func (nf NullableFloat64) IsZero() bool {
+	return nf.Value == nil
+}
+
+// UnmarshalJSON 支援數值、可轉換為數值的字串，或 null
+func (nf *NullableFloat64) UnmarshalJSON(data []byte) error {
+	text := strings.TrimSpace(string(data))
+	if text == "" || text == "null" {
+		nf.Value = nil
+		return nil
+	}
+
+	var num float64
+	if err := json.Unmarshal(data, &num); err == nil {
+		nf.Value = &num
+		return nil
+	}
+
+	var str string
+	if err := json.Unmarshal(data, &str); err == nil {
+		str = strings.TrimSpace(str)
+		if str == "" {
+			nf.Value = nil
+			return nil
+		}
+		if f, err := strconv.ParseFloat(str, 64); err == nil {
+			nf.Value = &f
+			return nil
+		}
+		// 無法解析的字串視為 nil，交由後續驗證與回退
+		nf.Value = nil
+		return nil
+	}
+
+	// 如果出現非數值類型（例如物件），保留 nil 讓後續流程處理
+	nf.Value = nil
+	return nil
+}
+
+// MarshalJSON 以數值或 null 形式序列化
+func (nf NullableFloat64) MarshalJSON() ([]byte, error) {
+	if nf.Value == nil {
+		return []byte("null"), nil
+	}
+	return json.Marshal(*nf.Value)
+}

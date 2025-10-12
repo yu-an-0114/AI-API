@@ -96,6 +96,7 @@ func (s *FoodService) IdentifyFood(ctx context.Context, imageData string, descri
 9. 根據辨識到的食物給出推論後可能需要用到的食材與製作廚具
 10. 不需要考慮可讀性，請省略所有空格和換行，返回最緊湊的 JSON 格式
 11. 所有欄位都必須要有不能漏掉，如果不知道填什麼請留空 "" or null
+
 請以以下 JSON 格式返回：
 {
     "recognized_foods": [

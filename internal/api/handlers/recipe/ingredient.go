@@ -37,7 +37,7 @@ func HandleIngredientRecognition(ingredientService *recipe.IngredientService, im
 
 		// 解析請求
 		var req IngredientRecognitionRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		if err := common.DecodeJSON(r.Body, &req); err != nil {
 			common.LogError("Invalid request format",
 				zap.Error(err),
 				zap.String("request_id", requestID))

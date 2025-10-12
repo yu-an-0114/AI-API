@@ -121,7 +121,7 @@ func sanitizeResponse(body []byte) string {
 	}
 
 	var raw map[string]interface{}
-	if err := json.Unmarshal(body, &raw); err != nil {
+	if err := common.ParseJSONBytes(body, &raw); err != nil {
 		// 如果不是 JSON，檢查是否包含 base64 數據
 		if strings.Contains(string(body), "base64") {
 			return "[BASE64_DATA_REMOVED]"
@@ -270,7 +270,7 @@ func (c *Client) Generate(ctx context.Context, prompt, imageData string) (*Respo
 
 	// 解析響應
 	var response Response
-	if err := json.Unmarshal(body, &response); err != nil {
+	if err := common.ParseJSONBytes(body, &response); err != nil {
 		common.LogError("Failed to parse AI service response",
 			zap.Error(err),
 			zap.String("model", req.Model),

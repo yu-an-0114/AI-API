@@ -1,8 +1,7 @@
 package recipe
 
 import (
-	"encoding/json"
-	"fmt"
+    "fmt"
 	"net/http"
 	"strings"
 	recipeAI "recipe-generator/internal/core/ai/service"
@@ -37,16 +36,16 @@ type RecipeByNameResponse struct {
 }
 
 type RecipeStep struct {
-	StepNumber         int            `json:"step_number"`
-	ARtype           common.ARtype           `json:"ARtype,omitempty"`
-	ARParameters     *common.ARActionParams `json:"ar_parameters,omitempty"`
-	Title              string         `json:"title"`
-	Description        string         `json:"description"`
-	Actions            []RecipeAction `json:"actions"`
-	EstimatedTotalTime string         `json:"estimated_total_time"`
-	Temperature        string         `json:"temperature"`
-	Warnings           string         `json:"warnings"`
-	Notes              string         `json:"notes"`
+	StepNumber         int                   `json:"step_number"`
+	ARtype             common.ARtype         `json:"ARtype"`
+	ARParameters       *common.ARActionParams `json:"ar_parameters"`
+	Title              string                `json:"title"`
+	Description        string                `json:"description"`
+	Actions            []RecipeAction        `json:"actions"`
+	EstimatedTotalTime string                `json:"estimated_total_time"`
+	Temperature        string                `json:"temperature"`
+	Warnings           string                `json:"warnings"`
+	Notes              string                `json:"notes"`
 }
 
 type RecipeAction struct {
@@ -126,6 +125,10 @@ func (h *Handler) HandleRecipeByName(c *gin.Context) {
 		CookingMethod:       req.Preference.CookingMethod,
 		DietaryRestrictions: []string{req.Preference.Doneness},
 		ServingSize:         req.Preference.ServingSize,
+	}
+	if len(req.PreferredEquipment) > 0 {
+		equipmentNote := fmt.Sprintf("可用設備：%s", strings.Join(req.PreferredEquipment, "、"))
+		preferences.DietaryRestrictions = append(preferences.DietaryRestrictions, equipmentNote)
 	}
 
 	// 將 preferred_ingredients 轉換為 Ingredient 結構
@@ -338,8 +341,8 @@ func (h *Handler) HandleRecipeByIngredients(c *gin.Context) {
 		}
 		response.Recipe[j] = RecipeStep{
 			StepNumber:         step.StepNumber,
-			ARtype:             step.ARtype,         
-    		ARParameters:       step.ARParameters,   
+			ARtype:             step.ARtype,
+			ARParameters:       step.ARParameters,
 			Title:              step.Title,
 			Description:        step.Description,
 			Actions:            actions,
@@ -479,7 +482,7 @@ func parseCookQAResponse(content string) (*CookQAResponse, error) {
 		text = text[start : end+1]
 	}
 	var result CookQAResponse
-	if err := json.Unmarshal([]byte(text), &result); err != nil {
+	if err := common.ParseJSON(text, &result); err != nil {
 		return nil, err
 	}
 	return &result, nil

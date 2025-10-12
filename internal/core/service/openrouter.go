@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
@@ -110,7 +109,7 @@ func (s *OpenRouterService) GenerateResponse(ctx context.Context, prompt string,
 		} `json:"choices"`
 	}
 
-	if err := json.Unmarshal(resp.Body(), &result); err != nil {
+	if err := common.ParseJSONBytes(resp.Body(), &result); err != nil {
 		return "", fmt.Errorf("failed to parse OpenRouter response: %w", err)
 	}
 
