@@ -1,69 +1,29 @@
 package common
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
 	"regexp"
 	"strings"
 )
 
-// ParseJSON 解析 JSON 字符串到結構體
+// ParseJSON 解析 JSON 字符串到結構體（薄包 json.Unmarshal）
 func ParseJSON(data string, v interface{}) error {
-	return decodeJSON(strings.NewReader(data), v, false)
-}
-
-// ParseJSONStrict 解析 JSON 字符串到結構體（禁止未知欄位）
-func ParseJSONStrict(data string, v interface{}) error {
-	return decodeJSON(strings.NewReader(data), v, true)
+	return json.Unmarshal([]byte(data), v)
 }
 
 // ParseJSONBytes 解析 JSON 位元組切片到結構體
 func ParseJSONBytes(data []byte, v interface{}) error {
-	return decodeJSON(bytes.NewReader(data), v, false)
+	return json.Unmarshal(data, v)
 }
 
-// ParseJSONBytesStrict 解析 JSON 位元組切片到結構體（禁止未知欄位）
-func ParseJSONBytesStrict(data []byte, v interface{}) error {
-	return decodeJSON(bytes.NewReader(data), v, true)
-}
-
-// DecodeJSON 使用統一設定解析 JSON
-func DecodeJSON(r io.Reader, v interface{}) error {
-	return decodeJSON(r, v, false)
-}
-
-// DecodeJSONStrict 使用統一設定解析 JSON，禁止未知欄位
-func DecodeJSONStrict(r io.Reader, v interface{}) error {
-	return decodeJSON(r, v, true)
-}
-
-func decodeJSON(r io.Reader, v interface{}, disallowUnknown bool) error {
-	dec := json.NewDecoder(r)
-	dec.UseNumber()
-	if disallowUnknown {
-		dec.DisallowUnknownFields()
+// ToJSON 將結構體轉換為 JSON 字符串（薄包 json.Marshal）
+func ToJSON(v interface{}) (string, error) {
+	data, err := json.Marshal(v)
+	if err != nil {
+		return "", err
 	}
-
-	if err := dec.Decode(v); err != nil {
-		return err
-	}
-
-	// 確保沒有多餘資料
-	for {
-		t, err := dec.Token()
-		if err == io.EOF {
-			return nil
-		}
-		if err != nil {
-			return err
-		}
-		// 若讀到額外 token，視為錯誤
-		if t != nil {
-			return fmt.Errorf("unexpected extra JSON data")
-		}
-	}
+	return string(data), nil
 }
 
 var unquotedKeyPattern = regexp.MustCompile(`([{\[,]\s*)([A-Za-z_][A-Za-z0-9_]*)\s*:`)
@@ -71,15 +31,6 @@ var unquotedKeyPattern = regexp.MustCompile(`([{\[,]\s*)([A-Za-z_][A-Za-z0-9_]*)
 // QuoteJSONKeys 將未加雙引號的鍵補上雙引號
 func QuoteJSONKeys(raw string) string {
 	return unquotedKeyPattern.ReplaceAllString(raw, `$1"$2":`)
-}
-
-// ToJSON 將結構體轉換為 JSON 字符串
-func ToJSON(v interface{}) (string, error) {
-	data, err := json.Marshal(v)
-	if err != nil {
-		return "", err
-	}
-	return string(data), nil
 }
 
 // StringSliceToString 將字符串切片轉換為逗號分隔的字符串

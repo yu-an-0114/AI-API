@@ -100,7 +100,7 @@ func (s *SuggestionService) SuggestRecipes(ctx context.Context, req *common.Reci
 - 飲食限制：%s
 - 份量：%s
 
-要求：
+要求：格式：「UTF-8」
 1. 只根據提供的食材和設備推薦內容，不要添加未出現的食材或設備
 2. 不要使用預設值或猜測值，若無法確定請填寫 "未知"
 3. 每個步驟都要非常詳細，適合新手操作
@@ -117,14 +117,17 @@ func (s *SuggestionService) SuggestRecipes(ctx context.Context, req *common.Reci
 14. 不要使用\n，不需要換行
 15. 所有欄位都必須要有不能漏掉，如果不知道填什麼請留空 "" or null
 16. 只回傳一個獨立的json，不要回傳多個json
-17. "ingredient":"ingredient" 不要直接寫 ingredient，如果是調味料或液體要使用具體英文小寫名稱，不得出現空白或非 ASCII 字元
-18. 除了 ar_parameters 內部欄位維持英文，其餘所有欄位內容一律使用繁體中文描述
-19. 每個步驟只能描述一個主要的烹飪動作，對應單一的 ARtype
-20. 每個步驟只允許一個 action 物件，內容需與該 ARtype 完整對應
-21. 每個步驟必須提供 ARtype 與 ar_parameters，且 ar_parameters.type 必須等於 ARtype
-22. ar_parameters 欄位若無資料請填 null，ingredient 必須使用具體英文小寫名稱，不得使用 "ingredient"、"food" 等泛用詞
-23. 所有設備名稱與 ar_parameters.container 只能使用提供的設備清單中可對應的英文容器名稱，不得新增其他設備或容器
-24. 嚴格輸出單一 JSON 物件，不要額外輸出自然語言或程式碼區塊
+17. ar_parameters."type" 必須使用以下白名單其中之一：putIntoContainer、stir、pourLiquid、flipPan、countdown、temperature、flame、sprinkle、torch、cut、peel、flip、beatEgg，禁止使用其他字詞（例如 mix、heat、soak、fry、plating 等）
+18. ar_parameters."ingredient":"ingredient" 不要直接寫 ingredient，如果是調味料或液體要使用具體英文小寫名稱如果有兩個ingredient用請使用英文逗號 ","隔開，不得出現空白或非 ASCII 字元；若描述涉及特定食材請使用該食材對應的英文代碼
+19. 必須依照 ar_parameters.type 提供所需欄位：例如 temperature 類型一定要填寫數值（攝氏）與 container，pourLiquid 類型一定要填寫 container、color、ingredient；若 AI 無法取得精確數值請估算合理的數值而非留空或填 null
+20. 除了 ar_parameters 內部欄位維持英文，其餘所有欄位內容一律使用繁體中文描述
+21. 每個步驟只能描述一個主要的烹飪動作，對應單一的 ARtype
+22. 每個步驟只允許一個 action 物件，內容需與該 ARtype 完整對應
+23. 每個步驟必須提供 ARtype 與 ar_parameters，且 ar_parameters.type 必須等於 ARtype
+24. ar_parameters 欄位若無資料請填 null，ingredient 必須使用具體英文小寫名稱，不得使用 "ingredient"、"food" 等泛用詞
+25. 所有設備名稱與 ar_parameters.container 只能使用提供的設備清單中可對應的英文容器名稱，不得新增其他設備或容器
+26. 嚴格輸出單一 JSON 物件，不要額外輸出自然語言或程式碼區塊
+27.請只輸出 JSON，不要包含任何自然語言或程式碼區塊標記，並確保所有輸出皆為 「UTF-8」 編碼以避免亂碼。
 請以以下 JSON 格式返回（僅作為範例，請勿直接複製內容）：
 {
     "dish_name": "菜名",

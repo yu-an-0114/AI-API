@@ -45,7 +45,7 @@ func (s *RecipeService) GenerateRecipe(ctx context.Context, dishName string, ing
 		- 烹飪方式：%s
 		- 飲食限制：%s
 		- 份量：%s
-		要求：
+		要求：格式：「UTF-8」
 		1. 只根據提供的食材和偏好生成內容，不要添加未出現的食材或步驟
 		2. 不要使用預設值或猜測值，若無法確定請填寫 "未知"
 		3. 每個步驟都要非常詳細，適合新手操作
@@ -65,9 +65,12 @@ func (s *RecipeService) GenerateRecipe(ctx context.Context, dishName string, ing
 		17. 每個步驟只允許一個 action，必須對應單一 ARtype，禁止拆分多個子動作
 		18. 嚴格輸出單一 JSON 物件，不要額外輸出自然語言或程式碼區塊
 		19. 除了 ar_parameters 內部欄位維持英文，其餘所有欄位內容一律使用繁體中文描述
-		20. ar_parameters.ingredient:"ingredient"不要直接寫ingredient，如果是調味料或液體要寫那個的名稱，且只能包含「英文小寫字母」或底線，不得出現空白、符號、數字或非 ASCII 字元
-		21. 只能使用輸入資料中出現過的設備名稱與容器，不得新增其他設備或容器
-		22. ar_parameters.container 只能使用提供的設備清單中可對應的英文容器名稱，不得新增其他設備或容器
+		20. ar_parameters."type" 必須使用以下白名單其中之一：putIntoContainer、stir、pourLiquid、flipPan、countdown、temperature、flame、sprinkle、torch、cut、peel、flip、beatEgg，禁止使用其他字詞（例如 mix、heat、soak、fry、plating 等）
+		21. ar_parameters."ingredient":"ingredient" 不要直接寫 ingredient，如果是調味料或液體要使用具體「英文小寫」名稱如果有兩個ingredient用請使用英文逗號 ","隔開，不得出現空白或非 ASCII 字元；若描述涉及特定食材請使用該食材對應的英文代碼
+		22. 必須依照 ar_parameters.type 提供所需欄位：例如 temperature 類型一定要填寫數值（攝氏）與 container，pourLiquid 類型一定要填寫 container、color、ingredient；若 AI 無法取得精確數值請估算合理的數值而非留空或填 null
+		23. 只能使用輸入資料中出現過的設備名稱與容器，不得新增其他設備或容器
+		24. ar_parameters.container 只能使用提供的設備清單中可對應的英文容器名稱，不得新增其他設備或容器
+		25.請只輸出 JSON，不要包含任何自然語言或程式碼區塊標記，並確保所有輸出皆為 「UTF-8」 編碼以避免亂碼。
 
 		請以以下 JSON 格式返回（僅作為範例，請勿直接複製內容）：
 		{
