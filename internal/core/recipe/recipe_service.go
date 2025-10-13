@@ -66,12 +66,12 @@ func (s *RecipeService) GenerateRecipe(ctx context.Context, dishName string, ing
 		18. 嚴格輸出單一 JSON 物件，不要額外輸出自然語言或程式碼區塊
 		19. 除了 ar_parameters 內部欄位維持英文，其餘所有欄位內容一律使用繁體中文描述
 		20. ar_parameters."type" 必須使用以下白名單其中之一：putIntoContainer、stir、pourLiquid、flipPan、countdown、temperature、flame、sprinkle、torch、cut、peel、flip、beatEgg，禁止使用其他字詞（例如 mix、heat、soak、fry、plating 等）
-		21. ar_parameters."ingredient":"ingredient" 不要直接寫 ingredient，如果是調味料或液體要使用具體「英文小寫」名稱如果有兩個ingredient用請使用英文逗號 ","隔開，不得出現空白或非 ASCII 字元；若描述涉及特定食材請使用該食材對應的英文代碼
-		22. 必須依照 ar_parameters.type 提供所需欄位：例如 temperature 類型一定要填寫數值（攝氏）與 container，pourLiquid 類型一定要填寫 container、color、ingredient；若 AI 無法取得精確數值請估算合理的數值而非留空或填 null
+		21. ar_parameters."ingredient":"ingredient" 不要直接寫 ingredient，一定要用英文小寫，如果是倒調味料或倒液體要使用他的調味料或液體，名稱如果有兩個ingredient用請使用英文逗號 ","隔開，不得出現空白或非 ASCII 字元；若描述涉及特定食材請使用該食材對應的英文代碼
+		22. 必須依照 ar_parameters.type 提供所需欄位：例如 temperature 類型「一定要」填寫 ar_parameters.temperature 為攝氏整數或可被解析的數值（如 180 表示 180°C）並同時填寫 ar_parameters.container；countdown 類型需提供整數秒數到 ar_parameters.time；pourLiquid 類型一定要填寫 container、color（如 brown、clear）、ingredient（英文小寫代碼）；flame 類型一定要填寫 ar_parameters.flameLevel，值只能是 small、medium、large；beatEgg 類型一定要填寫 ar_parameters.container；若 AI 無法取得精確數值請估算合理的整數而非留空或填 null
 		23. 只能使用輸入資料中出現過的設備名稱與容器，不得新增其他設備或容器
 		24. ar_parameters.container 只能使用提供的設備清單中可對應的英文容器名稱，不得新增其他設備或容器
 		25.請只輸出 JSON，不要包含任何自然語言或程式碼區塊標記，並確保所有輸出皆為 「UTF-8」 編碼以避免亂碼。
-
+	    26.生成的食譜步驟和description只能使用equipment有的
 		請以以下 JSON 格式返回（僅作為範例，請勿直接複製內容）：
 		{
 		"dish_name": "菜名",
